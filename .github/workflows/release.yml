@@ -1,0 +1,101 @@
+name: release
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - "burntty-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: burntty-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy,rustfmt
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Run tests
+        run: cargo test --workspace --locked
+
+  release:
+    name: Release
+    needs: verify
+    if: startsWith(github.ref, 'refs/tags/burntty-v')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build release binaries
+        run: cargo build --release --locked --bin burntty --bin burntty-daemon
+
+      - name: Package release assets
+        run: |
+          set -euo pipefail
+
+          target="x86_64-unknown-linux-gnu"
+          archive="burntty-${target}.tar.gz"
+          staging="dist/burntty-${target}"
+
+          rm -rf dist
+          mkdir -p "$staging"
+          cp target/release/burntty "$staging/"
+          cp target/release/burntty-daemon "$staging/"
+          cp README.md "$staging/"
+          tar -C "$staging" -czf "dist/${archive}" burntty burntty-daemon README.md
+          (cd dist && sha256sum "$archive" > checksums.txt)
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          version="${TAG#burntty-v}"
+          notes="Automated burntty release ${version}.
+
+          Assets:
+          - burntty-x86_64-unknown-linux-gnu.tar.gz
+          - checksums.txt"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/burntty-x86_64-unknown-linux-gnu.tar.gz dist/checksums.txt --clobber
+          else
+            gh release create "$TAG" dist/burntty-x86_64-unknown-linux-gnu.tar.gz dist/checksums.txt \
+              --title "burntty ${version}" \
+              --notes "$notes" \
+              --latest
+          fi
