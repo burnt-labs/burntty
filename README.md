@@ -12,6 +12,23 @@ resize terminals, and kill or remove sessions.
 cargo build
 ```
 
+## Release
+
+GitHub Actions builds and publishes Linux binaries when a `burntty-v*` tag is
+pushed:
+
+```sh
+git tag burntty-v0.1.0
+git push origin burntty-v0.1.0
+```
+
+The container image downloads `burntty` and `burntty-daemon` from the latest
+GitHub release by default. Pin a release during Docker builds with:
+
+```sh
+docker build --build-arg BURNTTY_VERSION=burntty-v0.1.0 -f containers/claude-code/Dockerfile .
+```
+
 ## Example
 
 ```sh
