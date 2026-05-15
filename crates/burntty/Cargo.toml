@@ -1,0 +1,17 @@
+[package]
+name = "burntty"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[[bin]]
+name = "burntty"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+burntty-protocol.workspace = true
+clap.workspace = true
+crossterm.workspace = true
+serde.workspace = true
+serde_json.workspace = true
