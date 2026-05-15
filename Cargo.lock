@@ -102,7 +102,7 @@ checksum = "5d20789868f4b01b2f2caec9f5c4e0213b41e3e5702a50157d699ae31ced2fcb"
 
 [[package]]
 name = "burntty"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "burntty-protocol",
@@ -114,7 +114,7 @@ dependencies = [
 
 [[package]]
 name = "burntty-daemon"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "burntty-protocol",
@@ -131,7 +131,7 @@ dependencies = [
 
 [[package]]
 name = "burntty-protocol"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "serde",
  "serde_json",
